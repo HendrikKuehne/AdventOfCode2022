@@ -4,7 +4,6 @@
 #include<vector>
 #include<assert.h>
 #include<map>
-#include"functions.h"
 
 /// @brief Shows the current chamber configuration as it is displayed in the instructions for this problem.
 /// @param chamber vector of vectors containing chars which describes the current configuration. It is assumed
@@ -47,6 +46,26 @@ int get_height(std::vector<std::vector<char> > chamber){
     return i + 1;
 }
 
+/// @brief Returns the height of the smallest column of rocks in the chamber.
+/// @param chamber as in print_chamber().
+int get_min_height(std::vector<std::vector<char> > chamber){
+    // sanity check
+    int size = chamber[0].size(); for(int i=1;i<chamber.size();i++){assert(chamber[i].size() == size);}
+
+    int min_height = chamber[0].size() - 1;
+    int i;
+    
+    for(int i_x = 0;i_x<7;i_x++){
+        i=chamber[0].size() - 1;
+
+        while(chamber[i_x][i] != '#'){i--; if(i == 0){break;}}
+        
+        if(i < min_height){min_height = i;}
+    }
+
+    return min_height;
+}
+
 typedef enum {horizontal,plus,L,vertical,square} blocktype;
 std::ostream &operator<<(std::ostream &os, const blocktype &value){
     if(value == horizontal){std::cout << "horizontal"; return os;}
@@ -57,8 +76,8 @@ std::ostream &operator<<(std::ostream &os, const blocktype &value){
     std::cout << value; return os;
 }
 
-/// @brief A circular buffer that contains variables and implements a function reservoir::get_next() that always resturns the nect variable from the buffer (starting from the beginning if we have reached the end).
-/// @tparam container typename that contains the variables
+/// @brief A circular buffer that contains variables and implements a function reservoir::get_next() that always resturns the next variable from the buffer (starting from the beginning if we have reached the end).
+/// @tparam container typename that contains the variables. It must have the attribute container::size !
 /// @tparam content typename of the variables themselves
 template<typename container,typename content>
 struct reservoir{
@@ -66,7 +85,10 @@ struct reservoir{
     int i;
 
     content get_next(){
-        return variables[(i++) % variables.size()];
+        content return_variable = variables[i];
+        i = (i + 1) % variables.size();
+
+        return return_variable;
     }
 
     reservoir(container _variables){
@@ -188,69 +210,3 @@ struct block{
 
     block(){};
 };
-
-bool output = false;
-
-int main(){
-    std::fstream file("day17_air.txt"); if(not file.is_open()){std::cout << "File not open!" << std::endl; return -1;}
-
-    std::string airblows; std::getline(file,airblows);
-
-    file.close();
-
-    // creating the circular buffers that contain air blow patterns and blocks
-    reservoir<std::string,char> airreservoir(airblows);
-    std::vector<blocktype> blocktypes = {horizontal,plus,L,vertical,square};
-    reservoir<std::vector<blocktype>,blocktype> blockreservoir(blocktypes);
-
-    /*
-    the rocks which are falling and have settled down will be contained in a vector of vectors called chamber, with the
-    first dimension being the width of the chamber (so it has size 7). The second dimension is the height. The vectors
-    contained in the first dimension of chamber must always have the same size!
-    */
-    
-    std::vector<std::vector<char> > chamber(7,std::vector<char>());
-
-    int n_rocks = 2022;
-    block current_block; char air_direction;
-    // looping through all blocks
-    for(int i_rocks=0;i_rocks<n_rocks;i_rocks++){
-        // fetching the next block and the next air blow
-        current_block = block(blockreservoir.get_next(),chamber);
-
-        if(::output){current_block.draw(chamber);}
-
-        // fetching the next air blow
-        air_direction = airreservoir.get_next();
-        // moving the block, if possible
-        if(current_block.check_side(air_direction,chamber)){
-            current_block.x += (air_direction == '<') ? -1 : 1;
-        }
-
-        if(::output){std::cout << "Pushing in direction " << air_direction << std::endl << std::endl; current_block.draw(chamber);}
-
-        do{
-            // letting the block fall
-            current_block.y -= 1;
-
-            if(::output){std::cout << "Falling" << std::endl << std::endl; current_block.draw(chamber);}
-
-            // fetching the next air blow
-            air_direction = airreservoir.get_next();
-            // moving the block, if possible
-            if(current_block.check_side(air_direction,chamber)){
-                current_block.x += (air_direction == '<') ? -1 : 1;
-            }
-
-            if(::output){std::cout << "Pushing in direction " << air_direction << std::endl << std::endl; current_block.draw(chamber);}
-        }while(current_block.check_below(chamber));
-
-        current_block.place(chamber);
-
-        if(::output){print_chamber(chamber);}
-    }
-
-    std::cout << "The stack of rocks is " << get_height(chamber) << " units tall." << std::endl;
-
-    return 0;
-}
