@@ -8,4 +8,4 @@ These are my solutions for the [Advent of Code 2022 Challenge](https://adventofc
 * Day 15: Solution for parts one and two
 * Day 17: Part one solved, attempted but not solved part two
 * Day 18: Solutions for parts one and two
-* Day 21: Solution for part one
+* Day 21: Solutions for parts one and two

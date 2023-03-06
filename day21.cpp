@@ -14,8 +14,10 @@ struct monkey{
     double value;
     monkey* lhs;
     monkey* rhs;
+    monkey* listener;
 
     std::string name;
+    std::string listener_name;
     std::string lhs_name;
     std::string rhs_name;
 
@@ -36,6 +38,18 @@ struct monkey{
         }
 
         return 0;
+    }
+
+    /// @brief Adds the pointer to this monkey to both the monkeys for whose results this monkey waits (in graph terms, adds the parent node).
+    void add_listener(){
+            lhs->listener = this;
+            rhs->listener = this;
+
+            lhs->listener_name = name;
+            rhs->listener_name = name;
+
+        if(lhs->operation != number){lhs->add_listener();}
+        if(rhs->operation != number){rhs->add_listener();}
     }
 
     /// @brief Creates a monkey that yells a number.
@@ -70,6 +84,86 @@ struct monkey{
     /// @brief Creates a dummy monkey.
     monkey(){operation = dummy;}
 };
+
+void reverse_graph(monkey* current_monkey,monkey* caller){
+    // moving up the graph until we find the root-monkey
+    if(current_monkey->listener->name != "root"){
+        reverse_graph(current_monkey->listener,current_monkey);
+    }else{
+        // since the root-monkey actually performs the '='-operation, we will just pass through it
+        if(current_monkey == current_monkey->listener->lhs){
+            current_monkey->listener = current_monkey->listener->rhs;
+        }else if(current_monkey == current_monkey->listener->rhs){
+            current_monkey->listener = current_monkey->listener->lhs;
+        }
+    }
+    
+    // reversing the operation and the operands
+    monkey* tmp;
+    if(current_monkey->operation == add and current_monkey->lhs == caller){
+        // reversing the operation
+        current_monkey->operation = subtract;
+
+        // re-wiring the operands and the listener
+        tmp = current_monkey->listener;
+        current_monkey->listener = current_monkey->lhs;
+        current_monkey->lhs = tmp;
+    }else if(current_monkey->operation == add and current_monkey->rhs == caller){
+        current_monkey->operation = subtract;
+
+        tmp = current_monkey->listener;
+        current_monkey->listener = current_monkey->rhs;
+        current_monkey->rhs = current_monkey->lhs;
+        current_monkey->lhs = tmp;
+    }else if(current_monkey->operation == subtract and current_monkey->lhs == caller){
+        // reversing the operation
+        current_monkey->operation = add;
+
+        // re-wiring the operands and the listener
+        tmp = current_monkey->listener;
+        current_monkey->listener = current_monkey->lhs;
+        current_monkey->lhs = tmp;
+    }else if(current_monkey->operation == subtract and current_monkey->rhs == caller){
+        // reversing the operation is not necessary
+
+        // re-wiring the operands and the listener
+        tmp = current_monkey->listener;
+        current_monkey->listener = current_monkey->rhs;
+        current_monkey->rhs = tmp;
+    }else if(current_monkey->operation == multiply and current_monkey->lhs == caller){
+        // reversing the operation
+        current_monkey->operation = divide;
+
+        // re-wiring the operands and the listener
+        tmp = current_monkey->listener;
+        current_monkey->listener = current_monkey->lhs;
+        current_monkey->lhs = tmp;
+    }else if(current_monkey->operation == multiply and current_monkey->rhs == caller){
+        // reversing the operation
+        current_monkey->operation = divide;
+
+        // re-wiring the operands and the listener
+        tmp = current_monkey->listener;
+        current_monkey->listener = current_monkey->rhs;
+        current_monkey->rhs = current_monkey->lhs;
+        current_monkey->lhs = tmp;
+    }else if(current_monkey->operation == divide and current_monkey->lhs == caller){
+        // reversing the operation
+        current_monkey->operation = multiply;
+
+        // re-wiring the operands and the listener
+        tmp = current_monkey->listener;
+        current_monkey->listener = current_monkey->lhs;
+        current_monkey->lhs = tmp;
+    }else if(current_monkey->operation == divide and current_monkey->rhs == caller){
+        // reversing the operation is not necessary
+
+        // re-wiring the operands and the listener
+        tmp = current_monkey->listener;
+        current_monkey->listener = current_monkey->rhs;
+        current_monkey->rhs = tmp;
+    }
+}
 
 int main(){
     std::string filename = "day21_monkeys.txt";
@@ -111,7 +205,28 @@ int main(){
 
     file_details.close();
 
-    std::cout << std::setprecision(20) << "The root-monkey yells " << rootmonkey->yell() << std::endl;
+    // ----------------------------------------------------------------------------------------------------------------------------------------------------------
+    //                                                      Part 1
+    // ----------------------------------------------------------------------------------------------------------------------------------------------------------
+
+    std::cout << std::setprecision(20) << "Part 1: The root-monkey yells " << rootmonkey->yell() << std::endl;
+
+    // ----------------------------------------------------------------------------------------------------------------------------------------------------------
+    //                                                      Part 2
+    // ----------------------------------------------------------------------------------------------------------------------------------------------------------
+
+    // adding the listeners to every monkey
+    rootmonkey->add_listener();
+
+    /* we will construct a new graph of monkeys where humn is the new root, such that humn yells
+    the desired result. We do this by reversing the operations of every monkey until we reach
+    the lefthand- or righthand-size of the former root and add the corresponding other side
+    normally. */
+
+    // reversing the graph
+    reverse_graph(monkeys["humn"].listener,&monkeys["humn"]);
+
+    std::cout << std::setprecision(20) << "Part 2: We need to yell " << monkeys["humn"].listener->yell() << std::endl;
 
     return 0;
 }
