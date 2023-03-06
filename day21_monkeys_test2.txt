@@ -1,0 +1,7 @@
+root: aaaa + aaab
+aaaa: 1
+aaab: aaac + aaad
+aaac: 1
+aaad: aaae + aaaf
+aaae: 1
+aaaf: 1

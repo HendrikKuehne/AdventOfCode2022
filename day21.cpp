@@ -8,16 +8,19 @@
 
 typedef enum {number,add,subtract,multiply,divide,dummy} operationtype;
 
-/// @brief Struct representing a single monkey that either returns a single value or returns the result
-/// of an operation, based upon the template variable.
+/// @brief Struct representing a single monkey that either returns a single value or returns the result of an operation.
 struct monkey{
     operationtype operation;
-    float value;
+    double value;
     monkey* lhs;
     monkey* rhs;
 
-    /// @brief returns what this monkey yells. The specific operation is dependent on the template variable.
-    float yell(){
+    std::string name;
+    std::string lhs_name;
+    std::string rhs_name;
+
+    /// @brief returns what this monkey yells. The specific operation is dependent on the operation variable.
+    double yell(){
         assert(operation != dummy); // sanity check
 
         if(operation == number){
@@ -35,17 +38,36 @@ struct monkey{
         return 0;
     }
 
-    monkey(float _value){
+    /// @brief Creates a monkey that yells a number.
+    monkey(double _value){
         operation = number;
         value = _value;
     }
 
+    /// @brief Creates a monkey that yells a number and has a name.
+    monkey(double _value,std::string _name){
+        operation = number;
+        value = _value;
+        name = _name;
+    }
+
+    /// @brief Creates a monkey that performs an operation.
     monkey(operationtype _operation,monkey* _lhs,monkey* _rhs){
         assert((_operation != number) and (_operation != dummy)); //sanity check
         operation = _operation;
         lhs = _lhs; rhs = _rhs;
     }
 
+    /// @brief Creates a monkey that performs an operation, has a name and knows the names of it's two operands.
+    monkey(operationtype _operation,monkey* _lhs,monkey* _rhs,std::string _name,std::string _lhs_name,std::string _rhs_name){
+        assert((_operation != number) and (_operation != dummy)); //sanity check
+        operation = _operation;
+        lhs = _lhs; rhs = _rhs;
+
+        name = _name; lhs_name = _lhs_name; rhs_name = _rhs_name;
+    }
+
+    /// @brief Creates a dummy monkey.
     monkey(){operation = dummy;}
 };
 
@@ -75,21 +97,21 @@ int main(){
 
         if(tmp.size() < 17){
             // this monkey yells a number
-            monkeys[name] = monkey(std::stof(std::string(tmp.begin()+6,tmp.end())));
+            monkeys[name] = monkey(std::stod(std::string(tmp.begin()+6,tmp.end())),name);
         }else{
-            // this monkey performs a calculation
+            // this monkey performs an operation
             lhs = std::string(tmp.begin()+6,tmp.begin()+10);
             rhs = std::string(tmp.begin()+13,tmp.end());
 
             if(tmp[11] == '+'){operation = add;}else if(tmp[11] == '-'){operation = subtract;}else if(tmp[11] == '*'){operation = multiply;}else if(tmp[11] == '/'){operation = divide;}
 
-            monkeys[name] = monkey(operation,&monkeys[lhs],&monkeys[rhs]);
+            monkeys[name] = monkey(operation,&monkeys[lhs],&monkeys[rhs],name,lhs,rhs);
         }
     }
 
     file_details.close();
 
-    std::cout << "The root-monkey yells " << rootmonkey->yell() << std::endl;
+    std::cout << std::setprecision(20) << "The root-monkey yells " << rootmonkey->yell() << std::endl;
 
     return 0;
 }
