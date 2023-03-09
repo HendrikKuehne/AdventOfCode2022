@@ -35,7 +35,7 @@ std::string stringprep(std::string line){
 
 struct{
     // the slice of the cave
-    std::vector<std::vector<char> > slice;
+    std::map<int,std::map<int,char> > slice;
     // keeping track of the maximum to see when sand is falling into the abyss
     int y_max = 0;
     
@@ -43,21 +43,22 @@ struct{
     /// @param block Character which represents the feature to be inserted.
     /// @param x,y Coordinates where the feature is to be inserted.
     /// @param empty_block The character which represents an empty block in the cave slice. Default is '.'.
-    void insert(char block,int x,int y,char empty_block='.'){
-        while(slice.size() <= x){slice.push_back(std::vector<char>());}
-        while(slice[x].size() <= y){slice[x].push_back(empty_block);}
-
+    /// @param update_y_max controls whetjer cave::y_max is updated or not. When inserting grains of sand,
+    /// we do not want cave::y_max to be updated since, otherwise, the floor would change it's height.
+    void insert(char block,int x,int y,char empty_block='.',bool update_y_max = true){
+        if(not slice.count(x)){slice[x] = std::map<int,char>();}
         slice[x][y] = block;
 
-        if(y > y_max){y_max = y;}
+        if(update_y_max){if(y > y_max){y_max = y;}}
     }
 
     /// @brief Checks if a block in the cave slice is occupied by anything.
     /// @param x,y Coordinates to be checked.
+    /// @return true if cave.slice[x][y] is unoccupied.
     bool check(int x,int y){
         // are the dimensions sufficiently large?
-        while(slice.size() <= x){slice.push_back(std::vector<char>());}
-        while(slice[x].size() <= y){slice[x].push_back('.');}
+        if(not slice.count(x)){slice[x] = std::map<int,char>();}
+        if(not slice[x].count(y)){slice[x][y] = '.';}
 
         if(slice[x][y] == '.'){return true;}else{return false;}
     }
@@ -107,9 +108,9 @@ int main(){
     file.close();
 
     bool finished = false;
-    int x = 500,y = 1,n_grains = 0;
+    int x = 500,y = 0,n_grains = 0;
 
-    while(not finished){
+    while(false){       // part one
         // letting the current grain of sand fall
         if(cave.check(x,y+1)){
             y++;
@@ -123,12 +124,43 @@ int main(){
             n_grains++;
 
             // next grain of sand incoming
-            x = 500; y = 1;
+            x = 500; y = 0;
         }
 
         if(y > cave.y_max){
             // a grain of sand reached the abyss
             finished = true;
+        }
+    }
+
+    while(not finished){
+        // checking if there is anywhere for the current grain of sand to fall
+        if(not (cave.check(x,y+1) or cave.check(x-1,y+1) or cave.check(x+1,y+1)) or y == cave.y_max + 1){
+            cave.insert('o',x,y,'.',false);
+            n_grains++;
+
+            if(y == 0){
+                // the source is blocked
+                finished = true;
+            }
+
+            // next grain of sand incoming
+            x = 500; y = 0;
+
+            continue;
+        }
+
+        if(y == cave.y_max + 1){
+            std::cout << "Aha" << std::endl;
+        }
+
+        // letting the current grain of sand fall
+        if(cave.check(x,y+1)){
+            y++;
+        }else if(cave.check(x-1,y+1)){
+            x--; y++;
+        }else if(cave.check(x+1,y+1)){
+            x++; y++;
         }
     }
 
