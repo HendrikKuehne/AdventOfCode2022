@@ -4,77 +4,63 @@
 #include<vector>
 #include"functions.h"
 
-int N;
+struct number{
+    int rank;
+    int value;
+    bool moved;
 
-/// @brief Returns the index at which std::vector::insert should insert the new value
-/// @param i index of the entry we are placing elsewhere
-/// @param shift how many places we shift. shift = 1 means we insert the new entry after the nect element!
-int index(int i,int shift){
-    if(shift >= 0){
-        // we go forward in the sequence
-        return (i + shift + 1) % ::N;
-    }else if((i + shift - 1) % ::N >= 0){
-        // we go backward but do not wrap around
-        return (i + shift - 1) % ::N;
-    }else{
-        // we go backward and wrap around
-        return N + (i + shift) % ::N;
-    }
-}
-
-std::vector<int> encode(std::vector<int> vec,int i){
-    int i_inbounds = index(i,vec[i]);
-    int element = vec[i];
-    if(i_inbounds == i){
-        return vec;
-    }else if(i_inbounds < i){
-        // the element will be inserted before the original location; we will need to delete one index later
-        i += 1;
+    number(int _rank,int _value){
+        rank = _rank;
+        value = _value;
+        moved = false;
     }
 
-    // inserting the element at its new location
-    vec.insert(vec.begin()+i_inbounds,element);
-    // deleting it at it's old location
-    vec.erase(vec.begin()+i);
+    number(){}
+};
 
-    return vec;
-}
+std::ostream &operator<<(std::ostream &os, const number &value){std::cout << value.value; return os;}
 
 int main(){
-    std::fstream file("day20_encrypted.txt"); if(not file.is_open()){std::cout << "File not open!" << std::endl; return -1;}
+    std::fstream file("day20_encrypted_test.txt"); if(not file.is_open()){std::cout << "File not open!" << std::endl; return -1;}
     
-    std::string tmp;
-    std::vector<int> sequence;
-    while(std::getline(file,tmp)){
-        sequence.push_back(std::stoi(tmp));
+    std::string tmpstr; std::vector<number> sequence; int rank = 0;
+    while(std::getline(file,tmpstr)){
+        sequence.push_back(number(rank++,std::stoi(tmpstr)));
     }
     file.close();
- 
-    // if(not duplicates(sequence)){std::cout << "There are duplicates!" << std::endl;}
-    // print(sequence);
+    print(sequence);
 
-    ::N = sequence.size();
+    // length of the sequence
+    int N = sequence.size();
 
-    int i=0;
-    dict shifted_numbers;
-    while(i < ::N){
-        if(not shifted_numbers.contains(sequence[i])){
-            // we have not shifted by the value sequence[i]
-            shifted_numbers.add(sequence[i]);
-            // std::cout << "Shifting entry sequence[" << i << "] = " << sequence[i] << std::endl;
-            sequence = encode(sequence,i);
-            // print(sequence);
-            i = 0;
-        }else{
-            i++;
+    int index,new_index,old_index,n_moves,direction; number tmp;
+    // doing the moving for all numbers, i.e. for all ranks
+    for(int current_rank=0;current_rank < N;current_rank++){
+        // finding the number in the sequence
+        for(int j=0;j < N;j++){
+            if(sequence[j].rank == current_rank){index = j; break;}
         }
+
+        // extracting the number of moves we should make
+        n_moves = sequence[index].value;
+
+        // finding the index at which the old (unmoved) number will lie
+        new_index = ((index + n_moves + (n_moves > 0 ? 1 : 0)) % N + N) % N;
+        old_index = (new_index < index) ? index + 1 : index;
+
+        // inserting the moved element
+        sequence.insert(sequence.begin() + new_index,sequence[index]);
+        // deleting the unmoved element
+        sequence.erase(sequence.begin() + old_index);
+
+        std::cout << "Moving " << n_moves << ":" << std::endl; print(sequence);
     }
 
-    std::cout << "Decoded the message!" << std::endl;
+    std::cout << std::endl << "Decoded the message!" << std::endl;
 
-    i=0;
-    for(;i < ::N;i++){if(sequence[i] == 0){break;}}
-    std::cout << sequence[(i + 1000) % ::N] << " + " << sequence[(i + 2000) % ::N] << " + " << sequence[(i + 3000) % ::N] << " = " << sequence[(i + 1000) % ::N] + sequence[(i + 2000) % ::N] + sequence[(i + 3000) % ::N] << std::endl;
+    int i=0;
+    for(;i < N;i++){if(sequence[i].value == 0){break;}}
+    std::cout << sequence[(i + 1000) % N].value << " + " << sequence[(i + 2000) % N].value << " + " << sequence[(i + 3000) % N].value << " = " << sequence[(i + 1000) % N].value + sequence[(i + 2000) % N].value + sequence[(i + 3000) % N].value << std::endl;
 
     return 0;
 }

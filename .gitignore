@@ -2,5 +2,5 @@
 *.app
 .DS_Store
 .vscode/*
-test.cpp
+test.*
 *.dSYM
