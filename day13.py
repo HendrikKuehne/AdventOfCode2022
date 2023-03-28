@@ -69,27 +69,81 @@ def packetcomp(iL,iR,left_packet,right_packet):
     else:
         return False
 
-# opening the file
-file = open("day13_packets.txt","r")
+filename = "day13_packets.txt"
 
-line = "dummy"
-pairindex = 0
-result = 0
+# -------------------------------------------------------------------------------------------
+#                               Part one
+# -------------------------------------------------------------------------------------------
 
-while(line != ""):
-    # reading in the packet strings
-    left_packet  = packetprep(file.readline())
-    right_packet = packetprep(file.readline())
+if False:
+    # opening the file
+    file = open(filename,"r")
+
+    line = "dummy"
+    pairindex = 0
+    result = 0
+
+    while(line != ""):
+        # reading in the packet strings
+        left_packet  = packetprep(file.readline())
+        right_packet = packetprep(file.readline())
+        line = file.readline()
+        pairindex += 1
+
+        # comparing the packets:
+        if packetcomp(0,0,left_packet,right_packet):
+            # print("Pair {}: Right order".format(pairindex))
+            result += pairindex
+        # else:
+        #     print("Pair {}: Failed".format(pairindex))
+
+    print("The result is {}".format(result))
+
+    file.close()
+
+# -------------------------------------------------------------------------------------------
+#                               Part two
+# -------------------------------------------------------------------------------------------
+
+if True:
+    # reading in all packets
+    all_packets = []
+    
+    file = open(filename,"r")
     line = file.readline()
-    pairindex += 1
-
-    # comparing the packets:
-    if packetcomp(0,0,left_packet,right_packet):
-        # print("Pair {}: Right order".format(pairindex))
-        result += pairindex
-    # else:
-    #     print("Pair {}: Failed".format(pairindex))
-
-print("The result is {}".format(result))
-
-file.close()
+    while line != "":
+        if line != "\n":
+            all_packets += [packetprep(line),]
+        line = file.readline()
+    
+    file.close()
+    
+    # adding the divider packets
+    divpack1 = ["[","[",2,"]","]"]
+    divpack2 = ["[","[",6,"]","]"]
+    all_packets += [divpack1,]
+    all_packets += [divpack2,]
+    
+    # sorting all packets using bubblesort
+    sorted = False
+    while(not sorted):
+        sorted = True
+    
+        for i in range(len(all_packets)-1):
+            if not packetcomp(0,0,all_packets[i],all_packets[i+1]):
+                tmp = all_packets[i]
+                all_packets[i] = all_packets[i+1]
+                all_packets[i+1] = tmp
+                sorted = False
+    
+    if True:
+        for i in range(len(all_packets)):
+            print(all_packets[i])
+    
+    # searching for the divider packets
+    result = 1
+    for i in range(len(all_packets)):
+        if all_packets[i] in (divpack1,divpack2):
+            result *= (i+1)
+    
+    print("The result is {}".format(result))
